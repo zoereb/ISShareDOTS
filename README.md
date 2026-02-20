@@ -1,4 +1,4 @@
-# `stepSequencer`
+# `Isshare`
 
 Thanks for using soundworks!
 
