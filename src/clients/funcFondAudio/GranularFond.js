@@ -94,9 +94,9 @@ class GranularSynthFond {
         const feedback = this.audioContext.createGain();
         feedback.gain.value = 0.3;
 
-        convolver_1.connect(delay); // Signal réverbéré → delay
-        delay.connect(feedback);    // Delay → feedback
-        feedback.connect(delay);     // Feedback → delay (boucle)
+        convolver_1.connect(delay); 
+        delay.connect(feedback);    
+        feedback.connect(delay);    
         delay.connect(gainExt); // là a changé  : this.audioContext.destination
       }
       else  {

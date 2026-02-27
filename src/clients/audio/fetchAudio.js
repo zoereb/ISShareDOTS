@@ -7,8 +7,8 @@ async function loadAudio(pathToFile, audioContext) {
   return audioBuffers;
 }
 
-// index --> doit deja etre en mode modulo (de 0 à 8) !
-export async function fetchAudio(index, coordonnee_ISS, audioContext, listeAudio) {
+const lst = [0,1,2,3,4] ;
+export async function fetchAudio( coordonnee_ISS, audioContext, listeAudio, h) {
 
     let index_pp = 0 ; // index du point le plus proche
 
@@ -17,21 +17,28 @@ export async function fetchAudio(index, coordonnee_ISS, audioContext, listeAudio
     let distance_loxodromique = 1000000 ; // grande valeur de départ
     let new_distance_loxodromique = 1000000;
 
+    for (let i=0; i< listeAudio.length; i++){ if (h.includes(i)) { lst.splice(lst.indexOf(i),1) ; } } // suppression des index deja choisis (pour diversifier "artficiellement" la composition)
+
     for (let i=0; i< listeAudio.length; i++){
-         new_distance_loxodromique = Math.abs( coordonnee_ISS.lat - listeAudio[i].coordinates.latitude) + Math.abs( coordonnee_ISS.lon - listeAudio[i].coordinates.longitude) ; // coo[i].lat coo[i].lon
+        if (h.includes(i)) { continue ; } // si l'index est déjà dans la liste des index choisis alors on le saute
+        new_distance_loxodromique = Math.abs( coordonnee_ISS.lat - listeAudio[i].coordinates.latitude) + Math.abs( coordonnee_ISS.lon - listeAudio[i].coordinates.longitude) ; // coo[i].lat coo[i].lon
         if ( distance_loxodromique > new_distance_loxodromique ){
-            distance_loxodromique = new_distance_loxodromique ; // changement de la distance aussi faut pas être con
-            index_pp = i ; // changement d'index si la distance est plus petite !
+            distance_loxodromique = new_distance_loxodromique ; // changement de la distance aussi 
+            index_pp = i ; // changement d'index en fonction de la distance la plus petite.
         }
     }
 
     if ( distance_loxodromique <50) {
-        const audioBuffers = await loadAudio(listeAudio[index_pp].audioPath, audioContext) ;  
-        return audioBuffers;
+            const audioBuffers = await loadAudio(listeAudio[index_pp].audioPath, audioContext) ;  
+            h.push(index_pp) ;
+            console.log("index de l'audio Choisis : " + index_pp) ;
+            console.log('liste des index déjà choisis : ' + h) ;
+        return  audioBuffers ;
     }
     else {
         return false ;
     }
+
 }
 
 export default fetchAudio ; 

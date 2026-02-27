@@ -5,10 +5,6 @@ import pluginCheckin from '@soundworks/plugin-checkin/client.js';
 import { AudioContext,
   GainNode
  } from 'node-web-audio-api'; 
-//import GranularSynth from '../../src/clients/Granular.js' ;
-//import automation from '../../src/clients/funcAudio/automation.js' ;
-//import duration_automation from './funcAudio/duration.js';
-//import period_automation from './funcAudio/period.js';
 import fetchAudio from '../../src/clients/audio/fetchAudio.js' ;
 import fs from 'fs' ;
 import { prechargerCSV }  from './API/fetchISSCSV.js';
@@ -16,16 +12,11 @@ import { CsvLatLon } from './API/chargeLineCSV.js';
 import GranularSynthFond from '../../src/clients/funcFondAudio/GranularFond.js' ;
 import {faire_listes} from '../../src/clients/audio/list_files.js'  ;
 import { VolumePlanet } from './funcFondAudio/VolumePlanet.js' ;
-import { decibelToLinear } from '@ircam/sc-utils';
 
 async function loadAudio(pathToFile, audioContext) { 
   const audioData = await fs.promises.readFile(pathToFile);
   const audioBuffers = await audioContext.decodeAudioData(audioData.buffer);
   return audioBuffers;
-}
-
-function modulo(a,b) { 
-  return ((a % b) + b ) % b
 }
 
 async function bootstrap() {
@@ -37,95 +28,89 @@ async function bootstrap() {
   const audioContext = new AudioContext();
 
   client.pluginManager.register('checkin', pluginCheckin);
-  
-  const  listeAudio  = await faire_listes();
-  let csvData = await prechargerCSV('./src/clients/API/api_1_data.csv');
-
   const global = await client.stateManager.attach('global');
   const player = await client.stateManager.create('player',  {id: client.id, }) ;
 
-  const id_mod = modulo(client.id, 8); 
-  player.set({ id_modulo: id_mod }) ;
-
+  /* 
+  Instanciation d'une couche de synthétiseurs granulaires (2) composant le fond sonore,
+  Création d'un volume spécifiquement pour le fond sonore (gainAllFond)
+  Nous appelons la classe GranularSynthFond dans le dossier funcFondAudio toute fonction relative au fond sonore s'y trouvant
+  */
+  
   const gainAllFond = new GainNode(audioContext, {
-      gain: decibelToLinear(player.get('volumeAllFond'))
+      gain: Math.exp(player.get('volumeAllFond')) -1
   });
 
   gainAllFond.connect(audioContext.destination) ;
 
-  const [bufferFont1, bufferFont2, bufferFont3 , bufferFont4, bufferFont5, bufferFont6, bufferFont7, bufferFont8] = await Promise.all([
-  loadAudio('./src/clients/audio/audio_nappe/Bresil_4.mp3', audioContext),
+  const [bufferFont1, bufferFont2] = await Promise.all([
   loadAudio('./src/clients/audio/audio_nappe/Maroc_2.mp3', audioContext),
-  loadAudio('./src/clients/audio/audio_nappe/Italie_3.mp3', audioContext),
-  loadAudio('./src/clients/audio/audio_nappe/Russie_1.mp3', audioContext),
-  loadAudio('./src/clients/audio/audio_nappe/Chine_3.mp3', audioContext),
-  loadAudio('./src/clients/audio/audio_nappe/Philippines_Papouasie_5.mp3', audioContext),
-  loadAudio('./src/clients/audio/audio_nappe/Australie_5.mp3', audioContext),
-  loadAudio('./src/clients/audio/audio_nappe/Nouvelle_Zelande_2.mp3', audioContext)
+  loadAudio('./src/clients/audio/audio_nappe/Australie_5.mp3', audioContext)
  ]);
 
-  /*Notre folie des 8 géné : , bufferFont3, bufferFont4, bufferFont5, bufferFont6, bufferFont7, bufferFont8
-*/
- 
-  //const granularFont1 = new GranularSynthFond(audioContext, gainAllFond, bufferFont1, player.get('volumeClient_1'), player.get('period_1') , 900 ,player.get('duration_1') , player.get('position_1') ,0.4, null , 1000, 3, null  , 1 , 1 , null ); // period = 0.2 , detune = 0 , duration = 0.1, position = 0 , spray = 0 frequence low pass
-  const granularFont1 = new GranularSynthFond(audioContext, gainAllFond, bufferFont2, player.get('volumeClient_2'), player.get('period_2') , 1000 ,player.get('duration_2') , player.get('position_2') , player.get('Spray_2'),null, null , null, null ,null, null, 0.25 ) ;  
-  //const granularFont3 = new GranularSynthFond(audioContext, gainAllFond, bufferFont3 ,player.get('volumeClient_3'), player.get('period_3') , 0 ,player.get('duration_3') , player.get('position_3') , player.get('Spray_3'), null, 1500 , 10 , null, 0.1 , 0.1) ; //400 et 3 fm au dela de 85 % ( va jusqu'à 30 secondes ) 
-  //const granularFont1 = new GranularSynthFond(audioContext, gainAllFond, bufferFont4, player.get('volumeClient_4'), player.get('period_4') , 0 ,player.get('duration_4') , player.get('position_4') , player.get('Spray_4') , null, 400 , 3 , null,  null , null  ) ; // 400 et 3 
-  //const granularFont2 = new GranularSynthFond(audioContext, gainAllFond, bufferFont5, player.get('volumeClient_5'), player.get('period_5') , 0 ,player.get('duration_5') , player.get('position_5') , player.get('Spray_5') , 250, null, null, null,  1.5 , 1.2 , 0.6) ; //
-  //const granularFont2 = new GranularSynthFond(audioContext, gainAllFond, bufferFont6, player.get('volumeClient_6'), player.get('period_6') , 0 ,player.get('duration_6') , player.get('position_6') , player.get('Spray_6')) ;  
-  const granularFont2 = new GranularSynthFond(audioContext, gainAllFond, bufferFont7, player.get('volumeClient_7'), 0.5 , 0 , 0.5 , 1 , 0.4) ;  
-  //const granularFont2 = new GranularSynthFond(audioContext, gainAllFond, bufferFont8, player.get('volumeClient_8'), player.get('period_8') , 0 ,player.get('duration_8') , player.get('position_8') , player.get('Spray_8') , null, null, null, null , null, null ) ;
+  const granularFont1 = new GranularSynthFond(audioContext, gainAllFond, bufferFont1, player.get('volumeClient_2'), global.get('period_1') , 1000 , player.get('duration_1') , global.get('position_1') , global.get('Spray_1'),null, null , null, null ,null, null, 0.25 ) ;  
+  const granularFont2 = new GranularSynthFond(audioContext, gainAllFond, bufferFont2, player.get('volumeClient_2'),  global.get('period_2') , 0 , player.get('duration_2') , global.get('position_2') , global.get('Spray_2')) ;  
   
+  /* 
+  Pour réaliser une apparition automatique des interventions sonores reliées à la position de l'ISS nous avons 
+  une instantiation de 2 valeurs 
+  -> src = futur AudioBufferSourceNode qui permettra de jouer l'audio de l'ISS
+  -> existAudio = condition d'existence d'une intervention sonore proche de la position de l'ISS, si oui alors existAudio = true et src est instancié, sinon existAudio = false et src = null
+  Cela permet de ne pas lancer plusieurs interventions sonores en même temps. 
+  Le tableau h est tableau qui permet à la fonciton fetchAUdio de ne pas choisir deux fois le même audio lorsque l'ISS passe deux fois vers le même endroit (càd plus d'une révolution)
+  */
 
   let src ;
-  //let syntheGranular ;
   let existAudio = false ;
-  let debut ;
 
   const gainISS = new GainNode(audioContext, {
-      gain: decibelToLinear(player.get('VolumeISS'))
+      gain: 0
   });
 
+  const  listeAudio  = await faire_listes(); // mise en forme des geo données des audios 
+  let csvData = await prechargerCSV('./src/clients/API/api_1_data.csv'); // récupération de la position de l'ISS à partir d'un CSV.
+
+  const h = [10] ; // permet de stocker les index des audios deja joués.
   global.onUpdate(async updates => {
     for (let [key, value] of Object.entries(updates)) {
       switch (key) {
         case 'position_01' : {
+          /* 
+          -> récupération des coordonnées de l'ISS à partir du CSV 
+          et stockage dans le global state pour pouvoir les réutiliser dans d'autres fonctions
+          */
           const { latitude, longitude } = CsvLatLon(csvData, global.get('timer_position_csv'));
           global.set({ position_coordonnee_latitude: latitude });
           global.set({ position_coordonnee_longitude: longitude });
 
           if (existAudio == false) {
-            fetchAudio(id_mod, { lat: latitude, lon: longitude }, audioContext, listeAudio).then((audioBuffers) => {
+            /* Verification de l'existence d'une intervention sonore proche de la position  de l'ISS  avec fetchAudio 
+            si oui alors la fonction fetchAudio renvoie le bon audioBuffer */
+            fetchAudio( { lat: latitude, lon: longitude }, audioContext, listeAudio, h).then(( audioBuffers) => {
               if (audioBuffers !== false) {
                 if (!src) {
-                  console.log("Audio buffer loaded successfully.");
-                  //syntheGranular = new GranularSynth(audioContext, audioBuffers);
                   gainISS.gain.setValueAtTime(0, audioContext.currentTime);
-                  gainISS.gain.linearRampToValueAtTime(0.5, audioContext.currentTime + 5) ;
-                  gainISS.gain.linearRampToValueAtTime(0, audioContext.currentTime + 25 ) ;
+                  gainISS.gain.linearRampToValueAtTime(Math.exp(player.get('VolumeISS')) -1, audioContext.currentTime + 5) ;
+                  gainISS.gain.linearRampToValueAtTime(0, audioContext.currentTime + 30 ) ;
 
-                  src = audioContext.createBufferSource() ; //un buffer
+                  src = audioContext.createBufferSource() ; 
                   src.buffer = audioBuffers ;
                   src.connect(gainISS) ;
                   gainISS.connect(audioContext.destination) ;
                   src.start();
                 
                   existAudio = true ;
-                  debut = value ;
+
+                  /* fonction setTimeout pour remettre à zéro les variables après un certain temps (> 30 sec minimum ici 100 sec), 
+                  afin de pouvoir relancer une nouvelle lecture audio si besoin (chaque révo). */
+                  setTimeout(() => {
+                    existAudio = false ;
+                    src = null ;
+                    audioBuffers = null ;
+                  }, 100000);
                 }
               }
             });
-          }
-          else if (existAudio==true) {
-            /*automation(value, debut).then((volumeValue) => {
-              syntheGranular.setVolume(volumeValue);
-            });
-              duration_automation(value, debut).then((durationValue) => {
-              syntheGranular.setDuration(durationValue);
-            });
-              period_automation(value, debut).then((periodValue) => {
-              syntheGranular.setPeriod(periodValue);
-            });*/    
           }
           break;
         }
@@ -133,242 +118,106 @@ async function bootstrap() {
           if (value == true) {
             granularFont1.setClientMute(true) ;
             granularFont2.setClientMute(true) ;
-            /*granularFont3.setClientMute(true) ;
-            granularFont4.setClientMute(true) ;
-            granularFont5.setClientMute(true) ;
-            granularFont6.setClientMute(true) ;
-            granularFont7.setClientMute(true) ;
-            granularFont8.setClientMute(true) ;*/
           }
           else {
             granularFont1.setClientMute(false) ;
             granularFont2.setClientMute(false) ;
-            /*granularFont3.setClientMute(false) ;
-            granularFont4.setClientMute(false) ;
-            granularFont5.setClientMute(false) ;
-            granularFont6.setClientMute(false) ;
-            granularFont7.setClientMute(false) ;
-            granularFont8.setClientMute(false) ;*/
           }
           break;
         }
-        /*case 'mute_ISS' : { // mute uniquement le son de l'ISS
+        case 'mute_ISS' : { // mute uniquement le son de l'ISS 
           if (value == true) {
-            if (syntheGranular) {
-              syntheGranular.setClientMute(true) ;
+            if (src) {
+              gainISS.gain.setValueAtTime(0, audioContext.currentTime) ;
             }
           }
           else {
-            if (syntheGranular) {
-              syntheGranular.setClientMute(false) ;
+            if (src) {
+              gainISS.gain.setValueAtTime(Math.exp(player.get('VolumeISS')) -1, audioContext.currentTime) ;         
             }
           }
-        }*/
-        case 'distance' : {
+        }
+        case 'distance' : { // Automation de volume du fond sonore (corssfade) en fonction de l'état du client Planet
           VolumePlanet(value).then(([G1, G2]) => {
           granularFont1.setClientVolume(G1) ; 
           granularFont2.setClientVolume(G2) ;
-          /*granularFont3.setClientVolume(G3) ;
-          granularFont4.setClientVolume(G4) ;
-          granularFont5.setClientVolume(G5) ;
-          granularFont6.setClientVolume(G6) ;
-          granularFont7.setClientVolume(G7) ;
-          granularFont8.setClientVolume(G8) ;*/
           });
+          break;
+        }
+        case 'position_1': {
+          granularFont1.setPosition(value) ;
+          break;
+        }
+        case 'period_2': {
+          granularFont2.setPeriod(value) ;
+          break;
+        }
+        case 'Spray_1': {
+          granularFont1.setSpray(value) ;
+          break;
+        }
+        case 'position_2': {
+          granularFont2.setPosition(value) ;
+          break;
+        }
+        case 'period_1': {
+          granularFont1.setPeriod(value) ;
+          break;
+        }
+        case 'Spray_2': {
+          granularFont2.setSpray(value) ;
+          break;
+        }
+        case 'chooseAudio': {
+          if (value == true) {
+            h.length = 0 ; // réinitialisation de h. 
+          }
           break;
         }
       }
     }
   }, true);
   
+  /* 
+  -> Changement du volume global du fond sonore ainsi que de l'audio attaché à l'ISS
+   de chaque raspberry pour le controller (mastering sur le controleur)
+  -> Changement des paramètres en fonction des changements d'état du player :  le volume de chaque couche (granularFont1 et 2) 
+  change en fonction du client Planet et le paramètre de duration change pour chaque granulaire en fonction du client Panneau Control
+  */
+
   player.onUpdate(updates => {
       for (let [key, value] of Object.entries(updates)) {
         switch (key) { 
           case 'volumeAllFond': {
-            gainAllFond.gain.setValueAtTime(value, audioContext.currentTime);
+            gainAllFond.gain.setValueAtTime(Math.exp(value) -1, audioContext.currentTime);
             break;
           }
           case 'VolumeISS': {
             if (src) {
-              gainISS.gain.setValueAtTime(value, audioContext.currentTime);            
+              gainISS.gain.setValueAtTime(Math.exp(value) -1, audioContext.currentTime) ;            
             }
             break;
           }
-          case 'period_1': {
-            granularFont1.setPeriod(value) ;
-            break;
-          }
-          case 'position_1': {
-            granularFont1.setPosition(value) ;
+
+          ////////// granular 1
+          case 'volumeClient_1': {
+            granularFont1.setClientVolume(value) ;
             break;
           }
           case 'duration_1': {
             granularFont1.setDuration(value) ;
             break;
           }
-          case 'Spray_1': {
-            granularFont1.setSpray(value) ;
-            break;
-          }
-          case 'volumeClient_1': {
-            granularFont1.setClientVolume(value) ;
-            break;
-          }
 
           /////////// granular 2
-          case 'period_2': {
-            granularFont2.setPeriod(value) ;
-            break;
-          }
-          case 'position_2': {
-            granularFont2.setPosition(value) ;
+          case 'volumeClient_2': {
+            granularFont2.setClientVolume(value) ;
             break;
           }
           case 'duration_2': {
             granularFont2.setDuration(value) ;
             break;
-          }
-          case 'Spray_2': {
-            granularFont2.setSpray(value) ;
-            break;
-          }
-          case 'volumeClient_2': {
-            granularFont2.setClientVolume(value) ;
-            break;
-          }
-
-          /*//////////// granular 3
-          case 'period_3': {
-            granularFont3.setPeriod(value) ;
-            break;
-          }
-          case 'position_3': {
-            granularFont3.setPosition(value) ;
-            break;
-          }
-          case 'duration_3': {
-            granularFont3.setDuration(value) ;
-            break;
-          }
-          case 'Spray_3': {
-            granularFont3.setSpray(value) ;
-            break;
-          }
-          case 'volumeClient_3': {
-            granularFont3.setClientVolume(value) ;
-            break;
-          }
-
-          /////////// granular 4
-          case 'period_4': {
-            granularFont4.setPeriod(value) ;
-            break;
-          }
-          case 'position_4': {
-            granularFont4.setPosition(value) ;
-            break;
-          }
-          case 'duration_4': {
-            granularFont4.setDuration(value) ;
-            break;
-          }
-          case 'Spray_4': {
-            granularFont4.setSpray(value) ;
-            break;
-          }
-          case 'volumeClient_4': {
-            granularFont4.setClientVolume(value) ;
-            break;
-          }
-
-          /////////// granular 5
-          case 'period_5': {
-            granularFont5.setPeriod(value) ;
-            break;
-          }
-          case 'position_5': {
-            granularFont5.setPosition(value) ;
-            break;
-          }
-          case 'duration_5': {
-            granularFont5.setDuration(value) ;
-            break;
-          }
-          case 'Spray_5': {
-            granularFont5.setSpray(value) ;
-            break;
-          }
-          case 'volumeClient_5': {
-            granularFont5.setClientVolume(value) ;
-            break;
-          }
-
-          /////////// granular 6
-          case 'period_6': {
-            granularFont6.setPeriod(value) ;
-            break;
-          }
-          case 'position_6': {
-            granularFont6.setPosition(value) ;
-            break;
-          }
-          case 'duration_6': {
-            granularFont6.setDuration(value) ;
-            break;
-          }
-          case 'Spray_6': {
-            granularFont6.setSpray(value) ;
-            break;
-          }
-          case 'volumeClient_6': {
-            granularFont6.setClientVolume(value) ;
-            break;
-          }
-
-          /////////// granular 7
-          case 'period_7': {
-            granularFont7.setPeriod(value) ;
-            break;
-          }
-          case 'position_7': {
-            granularFont7.setPosition(value) ;
-            break;
-          }
-          case 'duration_7': {
-            granularFont7.setDuration(value) ;
-            break;
-          }
-          case 'Spray_7': {
-            granularFont7.setSpray(value) ;
-            break;
-          }
-          case 'volumeClient_7': {
-            granularFont7.setClientVolume(value) ;
-            break;
-          }
-
-          /////////// granular 8
-          case 'period_8': {
-            granularFont8.setPeriod(value) ;
-            break;
-          }
-          case 'position_8': {
-            granularFont8.setPosition(value) ;
-            break;
-          }
-          case 'duration_8': {
-            granularFont8.setDuration(value) ;
-            break;
-          }
-          case 'Spray_8': {
-            granularFont8.setSpray(value) ;
-            break;
-          }
-          case 'volumeClient_8': {
-            granularFont8.setClientVolume(value) ;
-            break;
-          }
-            */
+          }  
         }
       }
   }, true)

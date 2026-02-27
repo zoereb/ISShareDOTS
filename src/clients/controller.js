@@ -37,17 +37,24 @@ async function main($container) {
 
   const players = await client.stateManager.getCollection('player'); 
 
+  /* 
+  Changement de l'index de lecture de la position de l'iss dans le fichier csv par les clients raspberrys ('position-01') 
+  Une fois que l'index arrive à son maximum (1395) il revient à son minimum. 
+  Ce changement régulier fonctionne à partir d'un Scheduler mais il est tout à fait possible de changer cette fonction 
+  en réalisant un setTimeOut() régulier. 
+  */
+
   const scheduler = new Scheduler(() => sync.getSyncTime(), {
      currentTimeToProcessorTimeFunction: syncTime => sync.getLocalTime(syncTime),
   });
 
   const processor = (currentTime, processorTime, event) => {
-    const newPosition = global.get('position_01') + 1/595;
+    const newPosition = global.get('position_01') + 1/1395; // ici change le nombre de revolutions
     const normalized = newPosition > 0.999 ? 0 : newPosition;
     
     global.set({ 
       position_01: normalized,
-      timer_position_csv: Math.floor(normalized * 595)
+      timer_position_csv: Math.floor(normalized * 1395)
     });
 
     return currentTime + 1/global.get('vitesse') * 10;
@@ -55,6 +62,13 @@ async function main($container) {
 
   const startTime = global.get('startTime');
   let satellitePosition = 0 ;
+  /* 
+  parmis les paramètres globaux accessibles via le controller, il y a : 
+  -> bouton 'running' : il demarre la mise à jour de la postion_01. 
+  -> Il est possible de changer la position_01 manuellement via un dial, mais cette fonction n'est pas nécéssaire ou seulement pour la partie des tests.
+  -> la vitesse de la mise à jour de position_01 qui est fixe pendant l'installation elle était nécéssaire pendant la phase de tests.
+  -> Deux boutons mute l'un qui coupe le volume des interventions sonores de l'ISS et l'autre qui coupe le volume du fond sonore.
+  */
   global.onUpdate(async updates => {
     for (let [key, value] of Object.entries(updates)) {
       switch (key) {
@@ -85,6 +99,11 @@ async function main($container) {
     }
   }, true);
 
+/* 
+Nous avons une table de mixage des volumes des interventions sonores de l'ISS ainsi que du fond sonore pour chaque raspberrys. 
+Le travail de mixage est réalisé avant l'installation et pendant si nous avons un problème. 
+Chaque raspberry est identifié par son id visible sur l'interface.
+*/
 
 function renderApp() {
   render(html`
@@ -167,6 +186,13 @@ function renderApp() {
               ?active=${global.get('mute_ISS')}
               @change=${e => global.set('mute_ISS', e.detail.value)}
             ></sc-toggle>
+            <span class="control-label"> Reset audio h</span>
+            <sc-bang
+              @input=${e => {
+                global.set('chooseAudio', true);
+                setTimeout(() => global.set('chooseAudio', false), 100);
+              }}
+            ></sc-bang>
           </div>
 
           <div style="margin-top: 16px;">

@@ -25,21 +25,18 @@ async function main($container) {
   const applyZoom = (zoom) => {
     currentZoom = Math.max(minZoom, Math.min(maxZoom, zoom));
     
-    // Mise à jour visuelle immédiate (local, pas de réseau)
+    // Mise à jour visuelle immédiate pour que le zoom soit fluide.
     const earthRotation = document.querySelector('.earth-rotation');
     if (earthRotation) {
       const scale = 0.5 + (1.0 - currentZoom) * 2.0;
       earthRotation.style.transform = `translate(-50%, -50%) scale(${scale})`;
     }
 
-    // Envoi réseau throttlé : maximum 1 fois toutes les 100ms
-    if (distanceUpdateTimeout) clearTimeout(distanceUpdateTimeout);
-    distanceUpdateTimeout = setTimeout(() => {
-      global.set({ distance: currentZoom });
-    }, 100);
+    global.set({ distance: currentZoom }) // changement immédiat -> il peut poser problème mais normalement non. 
+
   };
 
-  // Fonction de rendu
+  // Fonction de rendu très simple elle appelle une image dans le dossier config. 
   function renderApp() {
     render(html`
       <style>
@@ -85,6 +82,7 @@ async function main($container) {
           border-radius: 50%;
           box-shadow: 0 0 40px rgba(100, 255, 218, 0.4);
         }
+
       </style>
       <div class="simple-layout">
         <h1>glissez</h1>
@@ -108,6 +106,7 @@ async function main($container) {
       </div>
       
     `, $container);
+
   }
 
   renderApp();

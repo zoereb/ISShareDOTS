@@ -2,8 +2,10 @@ import { promisify } from 'util';
 import fs from 'fs';
 
 const readFile = promisify(fs.readFile);
-// que des promesses mais il est appelé une fois dans le client au tout début de lancement du code.
-//ça marche 
+/* que des promesses mais il est appelé une fois dans le client au tout début de lancement du code.
+ça marche 
+Cette fonction est appelée une fois dans le fichier client des raspberrys pi */
+
 async function faire_listes() {
   const path = './src/clients/audio/audio_synth/audio_';
   const result = [];
@@ -24,7 +26,7 @@ async function faire_listes() {
 
           result.push({
             audioPath,
-            coordinates: { latitude, longitude }
+            coordinates: { latitude, longitude } // je recupere les coordonnées latitudes et longitudes dans l'ordre des fichiers audios.
           });
         })
     );

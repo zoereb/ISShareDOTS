@@ -1,3 +1,5 @@
+//Récupération des données venant de l'API iss-now elle est appelée toutes les  secondes si on choisit d'utiliser l'API
+
 let lastGoodData = null ;
 async function fetchISSPosition() {
     try {
