@@ -1,5 +1,9 @@
 # `Isshare`
+Le dosier ConfigurationExterieur doit être retiré de ce dossier et mis dans le repertoire "superieur". 
+Il permet de modifier les audios sur chaque raspberrys (8) afin de ne pas les surcharger. 
+Pour cela il faut executer le fichier sh -> raplaceAudio.sh dans un terminal. 
 
+La suite de ce readme est celui de soundwork : 
 Thanks for using soundworks!
 
 ## Links / Resources
