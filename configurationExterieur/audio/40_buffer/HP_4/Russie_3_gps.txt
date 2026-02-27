@@ -1,0 +1,4 @@
+3_russie_gps
+
+latitude 	51.527535227845
+longitude 	46.055856943131
